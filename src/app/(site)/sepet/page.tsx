@@ -61,7 +61,7 @@ export default async function SepetSayfasi({
       <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
         <div className="divide-y divide-neutral-200 border border-neutral-200">
           {satirlar.map(({ u, q, fiyat, toplam, sorun }) => (
-            <div key={u.id} className="flex items-center gap-4 p-4">
+            <div key={u.id} className="flex flex-wrap items-center gap-4 p-4">
               <Link href={`/urun/${u.slug}`} className="block h-20 w-28 shrink-0 bg-neutral-100">
                 {u.images[0] && (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -69,7 +69,7 @@ export default async function SepetSayfasi({
                 )}
               </Link>
 
-              <div className="flex-1">
+              <div className="min-w-40 flex-1">
                 <Link href={`/urun/${u.slug}`} className="font-medium hover:text-teal-700">
                   {u.name}
                 </Link>

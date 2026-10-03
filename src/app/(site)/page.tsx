@@ -21,18 +21,20 @@ export default async function Home() {
 
   return (
     <main>
-      <div className="border-y border-neutral-200 bg-neutral-50 py-3 text-center text-lg">
-        Peşin Fiyatına 9 Taksit <span className="mx-3 text-neutral-300">|</span>
-        3 Ay Ödeme Erteleme <span className="mx-3 text-neutral-300">|</span>
-        36 Aya Varan Alışveriş Kredisi
+      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-y border-neutral-200 bg-neutral-50 px-4 py-3 text-sm md:text-lg">
+        <span className="whitespace-nowrap">Peşin Fiyatına 9 Taksit</span>
+        <span className="hidden text-neutral-300 sm:inline">|</span>
+        <span className="whitespace-nowrap">3 Ay Ödeme Erteleme</span>
+        <span className="hidden text-neutral-300 sm:inline">|</span>
+        <span className="whitespace-nowrap">36 Aya Varan Alışveriş Kredisi</span>
       </div>
 
       <section className="bg-linear-to-r from-[#efe6d8] to-[#d9c9b0]">
-        <div className="mx-auto flex max-w-330 flex-col items-start gap-5 px-4 py-24">
+        <div className="mx-auto flex max-w-330 flex-col items-start gap-5 px-4 py-12 md:py-24">
           <span className="rounded-full border border-amber-700 px-4 py-1 text-sm font-semibold text-amber-800">
             SONBAHAR FIRSATLARI DEVAM EDİYOR
           </span>
-          <h1 className="text-5xl font-light leading-tight text-[#7a3b1d]">
+          <h1 className="text-3xl font-light leading-tight md:text-5xl text-[#7a3b1d]">
             Sepette <b>%20&apos;ye Varan</b>
             <br />
             İndirim Fırsatlarını Kaçırma
@@ -46,14 +48,16 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-330 px-4 py-14">
-        <h2 className="mb-8 text-center text-2xl tracking-widest">ÖNE ÇIKANLAR</h2>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <section className="mx-auto max-w-330 px-4 py-8 md:py-14">
+        <h2 className="mb-5 text-center text-xl tracking-widest md:mb-8 md:text-2xl">
+          ÖNE ÇIKANLAR
+        </h2>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           {kategoriler.slice(0, 4).map((k) => (
             <Link
               key={k.id}
               href={`/kategori/${k.slug}`}
-              className="flex aspect-4/3 items-center justify-center bg-neutral-100 text-lg font-medium hover:bg-neutral-200"
+              className="flex h-16 items-center justify-center bg-neutral-100 px-2 text-center text-sm font-medium hover:bg-neutral-200 md:aspect-4/3 md:h-auto md:text-lg"
             >
               {k.name}
             </Link>
@@ -61,9 +65,11 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-330 px-4 pb-20">
-        <h2 className="mb-8 text-center text-2xl tracking-widest">ÇOK SATANLAR</h2>
-        <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
+      <section className="mx-auto max-w-330 px-4 pb-12 md:pb-20">
+        <h2 className="mb-5 text-center text-xl tracking-widest md:mb-8 md:text-2xl">
+          ÇOK SATANLAR
+        </h2>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-6">
           {urunler.map((u) => (
             <ProductCard
               key={u.id}

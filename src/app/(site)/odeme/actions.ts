@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCart, saveCart } from "@/lib/cart";
+import { mevcutMusteri } from "@/lib/musteri";
 
 export async function siparisVer(formData: FormData) {
   const s = (k: string) => String(formData.get(k) ?? "").trim();
@@ -27,6 +28,7 @@ export async function siparisVer(formData: FormData) {
   }
 
   const sepet = await getCart();
+  const musteri = await mevcutMusteri();
   if (sepet.length === 0) redirect("/sepet");
 
   let kod: string;
@@ -56,6 +58,7 @@ export async function siparisVer(formData: FormData) {
           phone,
           address: { il, ilce, adres },
           note,
+          userId: musteri?.id ?? null,
           total: Math.round(toplam * 100) / 100,
           items: { create: items },
         },
@@ -79,7 +82,24 @@ export async function siparisVer(formData: FormData) {
     }
     redirect("/odeme?hata=genel");
   }
-
+  if (musteri && formData.get("adresKaydet") === "on") {
+    const kayitli = await prisma.address.findMany({ where: { userId: musteri.id } });
+    const ayni = kayitli.some((a) => a.il === il && a.ilce === ilce && a.adres === adres);
+    if (!ayni && kayitli.length < 10) {
+      await prisma.address.create({
+        data: {
+          userId: musteri.id,
+          title: `${ilce} / ${il}`,
+          fullName,
+          phone,
+          il,
+          ilce,
+          adres,
+          isDefault: kayitli.length === 0,
+        },
+      });
+    }
+  }
   await saveCart([]);
   redirect(`/siparis-tamam/${kod}`);
 }

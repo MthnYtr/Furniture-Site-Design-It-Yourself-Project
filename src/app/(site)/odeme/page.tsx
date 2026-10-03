@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { getCart } from "@/lib/cart";
 import { tl } from "@/lib/siparis";
 import { siparisVer } from "./actions";
+import Link from "next/link";
+import { mevcutMusteri } from "@/lib/musteri";
+import AdresSecici from "@/components/AdresSecici";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +19,30 @@ export default async function OdemeSayfasi({
 }) {
   const { hata, urun } = await searchParams;
   const sepet = await getCart();
+  const musteri = await mevcutMusteri();
+  const sonSiparis = musteri
+    ? await prisma.order.findFirst({
+        where: { userId: musteri.id },
+        orderBy: { createdAt: "desc" },
+      })
+    : null;
+  const sonAdres = sonSiparis?.address as
+    | { il: string; ilce: string; adres: string }
+    | undefined;
+    const adresler = musteri
+    ? await prisma.address.findMany({
+        where: { userId: musteri.id },
+        orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+      })
+    : [];
+  const varsayilan = adresler[0] ?? null;
+  const baslangic = {
+    fullName: varsayilan?.fullName ?? musteri?.name ?? "",
+    phone: varsayilan?.phone ?? musteri?.phone ?? sonSiparis?.phone ?? "",
+    il: varsayilan?.il ?? sonAdres?.il ?? "",
+    ilce: varsayilan?.ilce ?? sonAdres?.ilce ?? "",
+    adres: varsayilan?.adres ?? sonAdres?.adres ?? "",
+  };
   if (sepet.length === 0) redirect("/sepet");
 
   const urunler = await prisma.product.findMany({
@@ -45,44 +72,72 @@ export default async function OdemeSayfasi({
   return (
     <main className="mx-auto max-w-330 px-4 py-8">
       <h1 className="mb-6 text-3xl font-light">Teslimat bilgileri</h1>
+        {!musteri && (
+        <p className="mb-6 text-sm text-neutral-600">
+          Üye misin?{" "}
+          <Link href="/uye/giris?next=/odeme" className="text-teal-700 hover:underline">
+            Giriş yap
+          </Link>{" "}
+          ve bilgilerin otomatik dolsun. Üye olmadan da sipariş verebilirsin.
+        </p>
+      )}
 
       <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
         <form action={siparisVer} className="space-y-4">
           {hataMesaji && <p className="bg-red-50 p-3 text-sm text-red-600">{hataMesaji}</p>}
+          {adresler.length > 0 && (
+            <AdresSecici
+              adresler={adresler.map((a) => ({
+                id: a.id,
+                title: a.title,
+                fullName: a.fullName,
+                phone: a.phone,
+                il: a.il,
+                ilce: a.ilce,
+                adres: a.adres,
+              }))}
+            />
+          )}
 
           <div>
             <label className={etiket}>Ad soyad *</label>
-            <input name="fullName" required className={alan} />
+            <input name="fullName" defaultValue={baslangic.fullName} required className={alan} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className={etiket}>E-posta *</label>
-              <input name="email" type="email" required className={alan} />
+              <input name="email" type="email" defaultValue={musteri?.email ?? ""} required className={alan} />
             </div>
             <div>
               <label className={etiket}>Telefon *</label>
-              <input name="phone" type="tel" required placeholder="05XX XXX XX XX" className={alan} />
+              <input name="phone" type="tel" defaultValue={baslangic.phone} required placeholder="05XX XXX XX XX" className={alan} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className={etiket}>İl *</label>
-              <input name="il" required className={alan} />
+              <input name="il" defaultValue={baslangic.il} required className={alan} />
             </div>
             <div>
               <label className={etiket}>İlçe *</label>
-              <input name="ilce" required className={alan} />
+              <input name="ilce" defaultValue={baslangic.ilce} required className={alan} />
             </div>
           </div>
           <div>
             <label className={etiket}>Açık adres *</label>
-            <textarea name="adres" rows={3} required className={alan} />
+            <textarea name="adres" rows={3} defaultValue={baslangic.adres} required className={alan} />
           </div>
           <div>
             <label className={etiket}>Sipariş notu</label>
             <textarea name="note" rows={2} className={alan} />
           </div>
 
+          {musteri && (
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" name="adresKaydet" /> Bu adresi hesabıma kaydet
+            </label>
+          )}
+          
           <p className="text-xs text-neutral-500">
             Online ödeme yakında eklenecek. Siparişin alındıktan sonra ödeme bilgisi için
             seninle iletişime geçeceğiz.

@@ -60,6 +60,7 @@ model Product {
   images      ProductImage[]
   variants    ProductVariant[]
   orderItems  OrderItem[]
+  favorites   Favorite[]
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
@@ -115,6 +116,8 @@ model User {
   phone         String?
   orders        Order[]
   savedDesigns  SavedDesign[]
+  addresses     Address[]
+  favorites     Favorite[]
   createdAt     DateTime      @default(now())
 }
 
@@ -161,4 +164,32 @@ model SavedDesign {
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+}
+
+model Address {
+  id        Int      @id @default(autoincrement())
+  title     String
+  fullName  String
+  phone     String
+  il        String
+  ilce      String
+  adres     String   @db.Text
+  isDefault Boolean  @default(false)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([productId])
 }

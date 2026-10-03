@@ -27,8 +27,8 @@ export async function isAdmin() {
   const token = (await cookies()).get(COOKIE)?.value;
   if (!token) return false;
   try {
-    await jwtVerify(token, key());
-    return true;
+    const { payload } = await jwtVerify(token, key());
+    return payload.role === "admin";
   } catch {
     return false;
   }

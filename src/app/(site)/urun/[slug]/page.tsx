@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import ProductCard from "@/components/ProductCard";
 import { sepeteEkle } from "../../sepet/actions";
+import { mevcutMusteri } from "@/lib/musteri";
+import { favoriDegistir } from "../../hesabim/favoriler/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +37,12 @@ export default async function UrunSayfasi({
     take: 4,
   });
 
+  const musteri = await mevcutMusteri();
+  const favori = musteri
+    ? await prisma.favorite.findUnique({
+        where: { userId_productId: { userId: musteri.id, productId: urun.id } },
+      })
+    : null;
   const fiyat = Number(urun.basePrice);
   const indirimli = urun.salePrice ? Number(urun.salePrice) : null;
 
@@ -129,6 +137,13 @@ export default async function UrunSayfasi({
                 TÜKENDİ
               </button>
             )}
+            <form action={favoriDegistir} className="mt-3">
+              <input type="hidden" name="productId" value={urun.id} />
+              <input type="hidden" name="donus" value={`/urun/${urun.slug}`} />
+              <button className="w-full border border-neutral-300 py-2 text-sm hover:bg-neutral-50">
+                {favori ? "♥ Favorilerimde" : "♡ Favorilere ekle"}
+              </button>
+            </form>
           </div>
 
           <div className="border-t border-neutral-200 p-5 text-xs text-neutral-600">
