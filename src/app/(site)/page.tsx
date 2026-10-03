@@ -5,9 +5,12 @@ import ProductCard from "@/components/ProductCard";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const urunler = await prisma.product.findMany({
+    const urunler = await prisma.product.findMany({
     where: { isActive: true },
-    include: { category: true },
+    include: {
+      category: true,
+      images: { orderBy: { sortOrder: "asc" }, take: 1 },
+    },
     orderBy: { createdAt: "desc" },
     take: 8,
   });
@@ -69,6 +72,7 @@ export default async function Home() {
               basePrice={Number(u.basePrice)}
               salePrice={u.salePrice ? Number(u.salePrice) : null}
               category={u.category.name}
+              image={u.images[0]?.url ?? null}
             />
           ))}
         </div>

@@ -14,8 +14,12 @@ export default async function KategoriSayfasi({
 
   const kategori = await prisma.category.findUnique({
     where: { slug },
-    include: {
-      products: { where: { isActive: true }, orderBy: { createdAt: "desc" } },
+        include: {
+      products: {
+        where: { isActive: true },
+        orderBy: { createdAt: "desc" },
+        include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
+      },
     },
   });
 
@@ -44,6 +48,7 @@ export default async function KategoriSayfasi({
               basePrice={Number(u.basePrice)}
               salePrice={u.salePrice ? Number(u.salePrice) : null}
               category={kategori.name}
+              image={u.images[0]?.url ?? null}
             />
           ))}
         </div>

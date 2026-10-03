@@ -17,14 +17,20 @@ export default async function UrunSayfasi({
 
   const urun = await prisma.product.findUnique({
     where: { slug },
-    include: { category: true, variants: true },
+        include: {
+      category: true,
+      variants: true,
+      images: { orderBy: { sortOrder: "asc" } },
+    },
   });
 
   if (!urun || !urun.isActive) notFound();
 
   const benzerler = await prisma.product.findMany({
     where: { categoryId: urun.categoryId, id: { not: urun.id }, isActive: true },
-    include: { category: true },
+    include: { category: true,
+      images: { orderBy: { sortOrder: "asc" }, take: 1 },
+    },
     take: 4,
   });
 
@@ -45,8 +51,17 @@ export default async function UrunSayfasi({
 
       <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
         <div>
-          <div className="flex aspect-4/3 items-center justify-center bg-neutral-100 text-neutral-400">
-            Görsel yakında
+                    <div className="flex aspect-4/3 items-center justify-center overflow-hidden bg-neutral-100 text-neutral-400">
+            {urun.images[0] ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={urun.images[0].url}
+                alt={urun.name}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              "Görsel yakında"
+            )}
           </div>
 
           <h1 className="mt-8 text-lg font-semibold uppercase tracking-wide">
@@ -124,6 +139,7 @@ export default async function UrunSayfasi({
                 basePrice={Number(u.basePrice)}
                 salePrice={u.salePrice ? Number(u.salePrice) : null}
                 category={u.category.name}
+                image={u.images[0]?.url ?? null}
               />
             ))}
           </div>

@@ -6,17 +6,23 @@ type Props = {
   basePrice: number;
   salePrice: number | null;
   category: string;
+  image?: string | null;
 };
 
 const tl = (n: number) => n.toLocaleString("tr-TR", { maximumFractionDigits: 0 }) + " TL";
 
-export default function ProductCard({ slug, name, basePrice, salePrice, category }: Props) {
+export default function ProductCard({ slug, name, basePrice, salePrice, category, image }: Props) {
   const indirim = salePrice ? Math.round((1 - salePrice / basePrice) * 100) : 0;
 
   return (
     <Link href={`/urun/${slug}`} className="group block">
-      <div className="relative flex aspect-4/3 items-center justify-center bg-neutral-100 text-sm text-neutral-400">
-        Görsel yakında
+      <div className="relative flex aspect-4/3 items-center justify-center overflow-hidden bg-neutral-100 text-sm text-neutral-400">
+        {image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={image} alt={name} className="h-full w-full object-cover" />
+        ) : (
+          "Görsel yakında"
+        )}
         {indirim > 0 && (
           <span className="absolute left-2 top-2 rounded-full bg-amber-200 px-2.5 py-1 text-xs font-bold text-amber-900">
             %{indirim} İndirim

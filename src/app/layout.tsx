@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Header from "@/components/Header";
 
 export const metadata: Metadata = {
   title: "Raflım | Raf, Kitaplık, Çalışma Masası ve Dolap",
@@ -10,10 +9,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="tr">
-      <body className="bg-white text-neutral-800 antialiased">
-        <Header />
-        {children}
-      </body>
+      <body className="bg-white text-neutral-800 antialiased">{children}</body>
     </html>
   );
 }
