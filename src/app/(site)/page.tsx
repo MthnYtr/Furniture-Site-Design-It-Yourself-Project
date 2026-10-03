@@ -73,6 +73,7 @@ export default async function Home() {
               salePrice={u.salePrice ? Number(u.salePrice) : null}
               category={u.category.name}
               image={u.images[0]?.url ?? null}
+              soldOut={u.stock <= 0}
             />
           ))}
         </div>

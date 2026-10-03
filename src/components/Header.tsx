@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { getCart } from "@/lib/cart";
 
 export default async function Header() {
   const kategoriler = await prisma.category.findMany({
     where: { parentId: null },
     orderBy: { sortOrder: "asc" },
   });
+
+  const adet = (await getCart()).reduce((t, x) => t + x.q, 0);
 
   return (
     <header className="bg-white shadow-sm">
@@ -37,7 +40,14 @@ export default async function Header() {
         <nav className="flex justify-end gap-6 text-xs font-semibold">
           <Link href="#">Giriş Yap</Link>
           <Link href="#">Favorilerim</Link>
-          <Link href="#">Sepetim</Link>
+          <Link href="/sepet">
+            Sepetim
+            {adet > 0 && (
+              <span className="ml-1 rounded-full bg-teal-700 px-1.5 py-0.5 text-[10px] text-white">
+                {adet}
+              </span>
+            )}
+          </Link>
         </nav>
       </div>
 

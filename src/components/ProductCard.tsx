@@ -7,11 +7,12 @@ type Props = {
   salePrice: number | null;
   category: string;
   image?: string | null;
+  soldOut?: boolean;
 };
 
 const tl = (n: number) => n.toLocaleString("tr-TR", { maximumFractionDigits: 0 }) + " TL";
 
-export default function ProductCard({ slug, name, basePrice, salePrice, category, image }: Props) {
+export default function ProductCard({ slug, name, basePrice, salePrice, category, image, soldOut }: Props) {
   const indirim = salePrice ? Math.round((1 - salePrice / basePrice) * 100) : 0;
 
   return (
@@ -26,6 +27,11 @@ export default function ProductCard({ slug, name, basePrice, salePrice, category
         {indirim > 0 && (
           <span className="absolute left-2 top-2 rounded-full bg-amber-200 px-2.5 py-1 text-xs font-bold text-amber-900">
             %{indirim} İndirim
+          </span>
+        )}
+        {soldOut && (
+          <span className="absolute inset-x-0 bottom-0 bg-neutral-800/80 py-1 text-center text-xs font-bold tracking-widest text-white">
+            TÜKENDİ
           </span>
         )}
       </div>

@@ -49,6 +49,7 @@ export default async function KategoriSayfasi({
               salePrice={u.salePrice ? Number(u.salePrice) : null}
               category={kategori.name}
               image={u.images[0]?.url ?? null}
+              soldOut={u.stock <= 0}
             />
           ))}
         </div>

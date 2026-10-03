@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import ProductCard from "@/components/ProductCard";
+import { sepeteEkle } from "../../sepet/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -113,12 +114,21 @@ export default async function UrunSayfasi({
           )}
 
           <div className="p-5 pt-0">
-            <button
-              type="button"
-              className="w-full bg-teal-700 py-3 text-sm font-bold tracking-wide text-white hover:bg-teal-800"
-            >
-              SEPETE EKLE
-            </button>
+            {urun.stock > 0 ? (
+              <form action={sepeteEkle}>
+                <input type="hidden" name="productId" value={urun.id} />
+                <button className="w-full bg-teal-700 py-3 text-sm font-bold tracking-wide text-white hover:bg-teal-800">
+                  SEPETE EKLE
+                </button>
+              </form>
+            ) : (
+              <button
+                disabled
+                className="w-full cursor-not-allowed bg-neutral-300 py-3 text-sm font-bold tracking-wide text-white"
+              >
+                TÜKENDİ
+              </button>
+            )}
           </div>
 
           <div className="border-t border-neutral-200 p-5 text-xs text-neutral-600">
@@ -140,6 +150,7 @@ export default async function UrunSayfasi({
                 salePrice={u.salePrice ? Number(u.salePrice) : null}
                 category={u.category.name}
                 image={u.images[0]?.url ?? null}
+                soldOut={u.stock <= 0}
               />
             ))}
           </div>

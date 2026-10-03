@@ -120,11 +120,16 @@ model User {
 
 model Order {
   id        Int         @id @default(autoincrement())
+  code      String      @unique @default(uuid())
   status    OrderStatus @default(PENDING)
   total     Decimal     @db.Decimal(10, 2)
+  fullName  String
+  email     String
+  phone     String
   address   Json
-  userId    Int
-  user      User        @relation(fields: [userId], references: [id])
+  note      String?     @db.Text
+  userId    Int?
+  user      User?       @relation(fields: [userId], references: [id])
   items     OrderItem[]
   createdAt DateTime    @default(now())
 
@@ -132,14 +137,15 @@ model Order {
 }
 
 model OrderItem {
-  id        Int      @id @default(autoincrement())
-  quantity  Int
-  unitPrice Decimal  @db.Decimal(10, 2)
-  config    Json?
-  orderId   Int
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId Int
-  product   Product  @relation(fields: [productId], references: [id])
+  id          Int     @id @default(autoincrement())
+  productName String
+  quantity    Int
+  unitPrice   Decimal @db.Decimal(10, 2)
+  config      Json?
+  orderId     Int
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   Int
+  product     Product @relation(fields: [productId], references: [id])
 
   @@index([orderId])
   @@index([productId])
