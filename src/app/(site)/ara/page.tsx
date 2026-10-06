@@ -1,7 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import ProductCard from "@/components/ProductCard";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  title: "Arama",
+  robots: { index: false, follow: true },
+};
 
 export default async function AraSayfasi({
   searchParams,
@@ -30,6 +35,7 @@ export default async function AraSayfasi({
           include: {
             category: true,
             images: { orderBy: { sortOrder: "asc" }, take: 1 },
+            _count: { select: { variants: true } },
           },
           orderBy: { createdAt: "desc" },
           take: 48,
@@ -60,6 +66,7 @@ export default async function AraSayfasi({
               category={u.category.name}
               image={u.images[0]?.url ?? null}
               soldOut={u.stock <= 0}
+              baslayan={u._count.variants > 0}
             />
           ))}
         </div>

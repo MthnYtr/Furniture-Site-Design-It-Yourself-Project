@@ -1,5 +1,22 @@
 import { notFound } from "next/navigation";
 import { SAYFALAR } from "@/lib/site";
+import type { Metadata } from "next";
+import { kisalt } from "@/lib/seo";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const s = SAYFALAR[slug];
+  if (!s) return {};
+  return {
+    title: s.baslik,
+    description: kisalt(s.metin[0]),
+    alternates: { canonical: `/sayfa/${slug}` },
+  };
+}
 
 export default async function BilgiSayfasi({
   params,

@@ -42,7 +42,7 @@ export default async function SiparisListesi() {
                 <td className="p-3">{tl(Number(s.total))}</td>
                 <td className="p-3">{DURUM_ADI[s.status as Durum]}</td>
                 <td className="p-3 text-right">
-                  <Link href={`/admin/siparisler/${s.id}`} className="text-teal-700 hover:underline">
+                  <Link href={`/admin/siparisler/${s.id}`} className="text-brand-700 hover:underline">
                     Aç
                   </Link>
                 </td>

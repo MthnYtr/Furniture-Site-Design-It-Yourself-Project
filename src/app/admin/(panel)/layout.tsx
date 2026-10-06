@@ -19,6 +19,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
           <Link href="/admin" className="hover:text-amber-300">Genel Bakış</Link>
           <Link href="/admin/urunler" className="hover:text-amber-300">Ürünler</Link>
           <Link href="/admin/kategoriler" className="hover:text-amber-300">Kategoriler</Link>
+          <Link href="/admin/ayarlar" className="hover:text-amber-300">Anasayfa Ayarları</Link>
           <Link href="/admin/siparisler" className="hover:text-amber-300">Siparişler</Link>
           <Link href="/" className="mt-6 text-neutral-300 hover:text-white">← Siteyi gör</Link>
         </nav>

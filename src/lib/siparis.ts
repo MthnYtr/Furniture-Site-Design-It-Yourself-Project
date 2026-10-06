@@ -3,8 +3,8 @@ export type Durum = (typeof DURUMLAR)[number];
 
 export const DURUM_ADI: Record<Durum, string> = {
   PENDING: "Bekliyor",
-  PAID: "Ödendi",
-  SHIPPED: "Kargoda",
+  PAID: "Hazırlanıyor",
+  SHIPPED: "Kargoya verildi",
   DELIVERED: "Teslim edildi",
   CANCELLED: "İptal",
 };

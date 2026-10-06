@@ -12,7 +12,9 @@ export type FormUrun = {
   stock: number;
   isActive: boolean;
   categoryId: number;
-  images: { id: number; url: string }[];
+  images: { id: number; url: string; sortOrder: number }[];
+  ozellikler: string;
+  boyutlar: string;
 };
 
 const alan = "w-full border border-neutral-300 bg-white px-3 py-2 text-sm";
@@ -116,6 +118,11 @@ export default function UrunFormu({
         </div>
       </div>
 
+      <p className="-mt-2 text-xs text-neutral-500">
+        Seçenekli üründe fiyat ve stok seçeneklerden otomatik hesaplanır. İndirim oranı bu
+        iki fiyat alanından alınır.
+      </p>
+
       <div>
         <label className={etiket}>Açıklama</label>
         <textarea
@@ -126,7 +133,29 @@ export default function UrunFormu({
         />
       </div>
 
+            <div>
+        <label className={etiket}>Ürün özellikleri</label>
+        <textarea
+          name="ozellikler"
+          rows={4}
+          defaultValue={urun?.ozellikler ?? ""}
+          placeholder={"Her satıra bir bilgi, iki nokta ile:\nMalzeme: Meşe kaplama\nRenk: Doğal ahşap"}
+          className={alan}
+        />
+      </div>
+
       <div>
+        <label className={etiket}>Ürün boyutları</label>
+        <textarea
+          name="boyutlar"
+          rows={3}
+          defaultValue={urun?.boyutlar ?? ""}
+          placeholder={"Genişlik: 80 cm\nYükseklik: 180 cm\nDerinlik: 30 cm"}
+          className={alan}
+        />
+      </div>
+
+            <div>
         <label className={etiket}>Fotoğraflar (jpg, png, webp)</label>
         {urun && urun.images.length > 0 && (
           <div className="mb-3 grid grid-cols-4 gap-3">
@@ -136,6 +165,15 @@ export default function UrunFormu({
                 <img src={g.url} alt="" className="aspect-4/3 w-full object-cover" />
                 <span className="mt-1 flex items-center gap-1">
                   <input type="checkbox" name="silinecek" value={g.id} /> Sil
+                </span>
+                <span className="mt-1 flex items-center gap-1">
+                  Sıra
+                  <input
+                    type="number"
+                    name={`sira_${g.id}`}
+                    defaultValue={g.sortOrder}
+                    className="w-14 border border-neutral-300 px-1"
+                  />
                 </span>
               </label>
             ))}
@@ -160,7 +198,7 @@ export default function UrunFormu({
       </label>
 
       <div className="flex gap-3">
-        <button className="bg-teal-700 px-6 py-2 text-sm font-bold text-white hover:bg-teal-800">
+        <button className="bg-brand-700 px-6 py-2 text-sm font-bold text-white hover:bg-brand-800">
           KAYDET
         </button>
         <a href="/admin/urunler" className="px-6 py-2 text-sm text-neutral-600 hover:underline">

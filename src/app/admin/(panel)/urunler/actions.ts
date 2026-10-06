@@ -6,6 +6,8 @@ import path from "path";
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { isAdmin } from "@/lib/auth";
+import { metindenSatirlara } from "@/lib/ozellik";
+import { varyantSenkronla } from "@/lib/varyant";
 
 async function adminSart() {
   if (!(await isAdmin())) redirect("/admin/login");
@@ -59,6 +61,10 @@ export async function kaydetUrun(id: number | null, formData: FormData) {
     salePrice,
     stock: Number(formData.get("stock")) || 0,
     isActive: formData.get("isActive") === "on",
+    attributes: {
+      ozellikler: metindenSatirlara(String(formData.get("ozellikler") ?? "")),
+      boyutlar: metindenSatirlara(String(formData.get("boyutlar") ?? "")),
+    },
     categoryId,
   };
 
@@ -88,6 +94,18 @@ export async function kaydetUrun(id: number | null, formData: FormData) {
     for (const g of gorseller) await dosyaSil(g.url);
   }
 
+    // Fotoğraf sırasını güncelle
+  const mevcutGorseller = await prisma.productImage.findMany({ where: { productId: urunId } });
+  for (const g of mevcutGorseller) {
+    const ham = formData.get(`sira_${g.id}`);
+    if (ham !== null && ham !== "") {
+      const sira = Number(ham);
+      if (Number.isFinite(sira) && sira !== g.sortOrder) {
+        await prisma.productImage.update({ where: { id: g.id }, data: { sortOrder: sira } });
+      }
+    }
+  }
+
   // Yeni fotoğrafları yükle
   const dosyalar = formData
     .getAll("gorseller")
@@ -108,7 +126,7 @@ export async function kaydetUrun(id: number | null, formData: FormData) {
       });
     }
   }
-
+  await varyantSenkronla(urunId);
   redirect("/admin/urunler");
 }
 

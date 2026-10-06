@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCart, saveCart } from "@/lib/cart";
 import { mevcutMusteri } from "@/lib/musteri";
+import { birimFiyat } from "@/lib/fiyat";
 
 export async function siparisVer(formData: FormData) {
   const s = (k: string) => String(formData.get(k) ?? "").trim();
@@ -28,27 +29,40 @@ export async function siparisVer(formData: FormData) {
   }
 
   const sepet = await getCart();
-  const musteri = await mevcutMusteri();
   if (sepet.length === 0) redirect("/sepet");
+
+  const musteri = await mevcutMusteri();
 
   let kod: string;
   try {
     kod = await prisma.$transaction(async (tx) => {
       const urunler = await tx.product.findMany({
         where: { id: { in: sepet.map((x) => x.id) }, isActive: true },
+        include: { variants: true },
       });
 
       const satirlar = sepet.flatMap((x) => {
         const u = urunler.find((p) => p.id === x.id);
-        return u ? [{ u, q: x.q }] : [];
+        if (!u) return [];
+        const varyant = x.v ? u.variants.find((y) => y.id === x.v) : undefined;
+        if (u.variants.length > 0 && !varyant) return [];
+        return [{ u, varyant, q: x.q }];
       });
       if (satirlar.length === 0) throw new Error("BOS");
 
       let toplam = 0;
-      const items = satirlar.map(({ u, q }) => {
-        const fiyat = Number(u.salePrice ?? u.basePrice);
+      const items = satirlar.map(({ u, varyant, q }) => {
+        const fiyat = birimFiyat(u, varyant);
         toplam += fiyat * q;
-        return { productId: u.id, productName: u.name, quantity: q, unitPrice: fiyat };
+        return {
+          productId: u.id,
+          productName: varyant ? `${u.name} (${varyant.name})` : u.name,
+          quantity: q,
+          unitPrice: fiyat,
+          config: varyant
+            ? { variantId: varyant.id, variantName: varyant.name, sku: varyant.sku }
+            : undefined,
+        };
       });
 
       const siparis = await tx.order.create({
@@ -65,12 +79,24 @@ export async function siparisVer(formData: FormData) {
       });
 
       // Stoku düş. Yeterli stok yoksa tüm işlem geri alınır.
-      for (const { u, q } of satirlar) {
-        const sonuc = await tx.product.updateMany({
-          where: { id: u.id, stock: { gte: q } },
-          data: { stock: { decrement: q } },
-        });
-        if (sonuc.count !== 1) throw new Error("STOK:" + u.name);
+      for (const { u, varyant, q } of satirlar) {
+        if (varyant) {
+          const sonuc = await tx.productVariant.updateMany({
+            where: { id: varyant.id, stock: { gte: q } },
+            data: { stock: { decrement: q } },
+          });
+          if (sonuc.count !== 1) throw new Error(`STOK:${u.name} (${varyant.name})`);
+          await tx.product.update({
+            where: { id: u.id },
+            data: { stock: { decrement: q } },
+          });
+        } else {
+          const sonuc = await tx.product.updateMany({
+            where: { id: u.id, stock: { gte: q } },
+            data: { stock: { decrement: q } },
+          });
+          if (sonuc.count !== 1) throw new Error(`STOK:${u.name}`);
+        }
       }
 
       return siparis.code;
@@ -82,6 +108,7 @@ export async function siparisVer(formData: FormData) {
     }
     redirect("/odeme?hata=genel");
   }
+
   if (musteri && formData.get("adresKaydet") === "on") {
     const kayitli = await prisma.address.findMany({ where: { userId: musteri.id } });
     const ayni = kayitli.some((a) => a.il === il && a.ilce === ilce && a.adres === adres);
@@ -100,6 +127,7 @@ export async function siparisVer(formData: FormData) {
       });
     }
   }
+
   await saveCart([]);
   redirect(`/siparis-tamam/${kod}`);
 }

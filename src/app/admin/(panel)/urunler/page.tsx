@@ -18,7 +18,7 @@ export default async function UrunListesi() {
         <h1 className="text-2xl font-light">Ürünler ({urunler.length})</h1>
         <Link
           href="/admin/urunler/yeni"
-          className="bg-teal-700 px-5 py-2 text-sm font-bold text-white hover:bg-teal-800"
+          className="bg-brand-700 px-5 py-2 text-sm font-bold text-white hover:bg-brand-800"
         >
           + YENİ ÜRÜN
         </Link>
@@ -74,7 +74,7 @@ export default async function UrunListesi() {
                 )}
               </td>
               <td className="p-3 text-right">
-                <Link href={`/admin/urunler/${u.id}`} className="text-teal-700 hover:underline">
+                <Link href={`/admin/urunler/${u.id}`} className="text-brand-700 hover:underline">
                   Düzenle
                 </Link>
               </td>

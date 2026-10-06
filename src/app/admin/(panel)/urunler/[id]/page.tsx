@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import UrunFormu from "@/components/admin/UrunFormu";
 import { kaydetUrun, urunSil } from "../actions";
+import { ozellikOku, satirlardanMetne } from "@/lib/ozellik";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +29,13 @@ export default async function UrunDuzenle({
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-light">Ürünü düzenle</h1>
+      <h1 className="mb-2 text-2xl font-light">Ürünü düzenle</h1>
+      <Link
+        href={`/admin/urunler/${urun.id}/secenekler`}
+        className="mb-6 inline-block text-sm text-brand-700 hover:underline"
+      >
+        Seçenekleri yönet (renk, ölçü) →
+      </Link>
       <UrunFormu
         kategoriler={kategoriler}
         action={kaydetUrun.bind(null, urun.id)}
@@ -44,7 +52,9 @@ export default async function UrunDuzenle({
           stock: urun.stock,
           isActive: urun.isActive,
           categoryId: urun.categoryId,
-          images: urun.images.map((g) => ({ id: g.id, url: g.url })),
+          images: urun.images.map((g) => ({ id: g.id, url: g.url, sortOrder: g.sortOrder })),
+          ozellikler: satirlardanMetne(ozellikOku(urun.attributes, "ozellikler")),
+          boyutlar: satirlardanMetne(ozellikOku(urun.attributes, "boyutlar")),
         }}
       />
 

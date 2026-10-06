@@ -51,7 +51,7 @@ export default async function LoginSayfasi({
           required
           className="w-full border border-neutral-300 px-3 py-2 text-sm"
         />
-        <button className="w-full bg-teal-700 py-2 text-sm font-bold text-white hover:bg-teal-800">
+        <button className="w-full bg-brand-700 py-2 text-sm font-bold text-white hover:bg-brand-800">
           GİRİŞ YAP
         </button>
       </form>

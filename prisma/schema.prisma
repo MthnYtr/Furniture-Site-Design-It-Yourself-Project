@@ -134,6 +134,9 @@ model Order {
   userId    Int?
   user      User?       @relation(fields: [userId], references: [id])
   items     OrderItem[]
+  cargoCompany String?
+  trackingCode String?
+  shippedAt    DateTime?
   createdAt DateTime    @default(now())
 
   @@index([userId])
@@ -192,4 +195,9 @@ model Favorite {
 
   @@unique([userId, productId])
   @@index([productId])
+}
+
+model SiteSetting {
+  key   String @id
+  value String @db.Text
 }

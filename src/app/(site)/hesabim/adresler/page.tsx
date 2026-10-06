@@ -2,16 +2,22 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { mevcutMusteri } from "@/lib/musteri";
+import Uyari from "@/components/Uyari";
 import { adresKaydet, adresSil, varsayilanYap } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-const alan = "w-full border border-neutral-300 px-3 py-2 text-sm";
-const etiket = "mb-1 block text-xs font-semibold uppercase tracking-wide text-neutral-600";
+const etiket = "mb-1.5 block text-xs font-semibold text-neutral-600";
 
-const HATALAR: Record<string, string> = {
-  eksik: "Lütfen tüm alanları doğru doldur (telefon en az 10 haneli olmalı).",
-  cok: "En fazla 10 adres kaydedebilirsin. Önce birini sil.",
+const HATALAR: Record<string, { baslik: string; aciklama: string }> = {
+  eksik: {
+    baslik: "Eksik veya hatalı bilgi",
+    aciklama: "Lütfen tüm alanları doğru doldur (telefon en az 10 haneli olmalı).",
+  },
+  cok: {
+    baslik: "Adres sınırına ulaştın",
+    aciklama: "En fazla 10 adres kaydedebilirsin. Önce birini sil.",
+  },
 };
 
 export default async function Adreslerim({
@@ -23,6 +29,7 @@ export default async function Adreslerim({
   if (!musteri) redirect("/uye/giris?next=/hesabim/adresler");
 
   const { hata, duzenle } = await searchParams;
+  const h = hata ? (HATALAR[hata] ?? { baslik: "Bir sorun oluştu", aciklama: "Lütfen tekrar dene." }) : null;
 
   const adresler = await prisma.address.findMany({
     where: { userId: musteri.id },
@@ -32,94 +39,109 @@ export default async function Adreslerim({
 
   return (
     <div>
-      <h2 className="mb-4 text-lg font-semibold">Adreslerim ({adresler.length})</h2>
+      <h2 className="mb-4 text-lg font-bold">Adreslerim ({adresler.length})</h2>
 
-      {hata && <p className="mb-4 bg-red-50 p-3 text-sm text-red-600">{HATALAR[hata] ?? "Bir sorun oluştu."}</p>}
+      {h && (
+        <Uyari tip="hata" baslik={h.baslik}>
+          {h.aciklama}
+        </Uyari>
+      )}
 
-      <div className="mb-8 grid gap-4 md:grid-cols-2">
-        {adresler.length === 0 && (
-          <p className="text-sm text-neutral-500">Henüz kayıtlı adresin yok. Aşağıdan ekleyebilirsin.</p>
-        )}
-        {adresler.map((a) => (
-          <div key={a.id} className="border border-neutral-200 p-4 text-sm">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="font-semibold">{a.title}</span>
-              {a.isDefault && (
-                <span className="rounded-full bg-teal-50 px-2 py-0.5 text-xs font-semibold text-teal-700">
-                  Varsayılan
-                </span>
-              )}
-            </div>
-            <div>{a.fullName} · {a.phone}</div>
-            <div className="text-neutral-600">
-              {a.adres}, {a.ilce} / {a.il}
-            </div>
-            <div className="mt-3 flex flex-wrap items-center gap-4 text-xs">
-              <Link href={`/hesabim/adresler?duzenle=${a.id}`} className="text-teal-700 hover:underline">
-                Düzenle
-              </Link>
-              {!a.isDefault && (
-                <form action={varsayilanYap}>
+      {adresler.length === 0 ? (
+        <div className="mb-8 rounded-lg border border-dashed border-neutral-300 bg-neutral-50 px-4 py-10 text-center text-sm text-neutral-500">
+          Henüz kayıtlı adresin yok. Aşağıdan ekleyebilirsin.
+        </div>
+      ) : (
+        <div className="mb-8 grid gap-4 md:grid-cols-2">
+          {adresler.map((a) => (
+            <div
+              key={a.id}
+              className={`rounded-lg border bg-white p-4 text-sm ${
+                a.isDefault ? "border-brand-700 ring-1 ring-brand-700" : "border-neutral-200"
+              } ${duzenlenen?.id === a.id ? "bg-brand-50" : ""}`}
+            >
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <span className="font-bold">{a.title}</span>
+                {a.isDefault && (
+                  <span className="rounded-full bg-brand-700 px-2.5 py-0.5 text-[11px] font-bold text-white">
+                    Varsayılan
+                  </span>
+                )}
+              </div>
+              <div className="font-medium">
+                {a.fullName} <span className="font-normal text-neutral-500">· {a.phone}</span>
+              </div>
+              <div className="mt-1 text-neutral-600">
+                {a.adres}, {a.ilce} / {a.il}
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-neutral-100 pt-3 text-xs font-semibold">
+                <Link href={`/hesabim/adresler?duzenle=${a.id}`} className="text-brand-700 hover:underline">
+                  Düzenle
+                </Link>
+                {!a.isDefault && (
+                  <form action={varsayilanYap}>
+                    <input type="hidden" name="id" value={a.id} />
+                    <button className="text-brand-700 hover:underline">Varsayılan yap</button>
+                  </form>
+                )}
+                <form action={adresSil} className="ml-auto">
                   <input type="hidden" name="id" value={a.id} />
-                  <button className="text-teal-700 hover:underline">Varsayılan yap</button>
+                  <button className="text-red-600 hover:underline">Sil</button>
                 </form>
-              )}
-              <form action={adresSil}>
-                <input type="hidden" name="id" value={a.id} />
-                <button className="text-red-600 hover:underline">Sil</button>
-              </form>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       <form
         key={duzenlenen?.id ?? "yeni"}
         action={adresKaydet}
-        className="max-w-xl space-y-4 border border-neutral-200 p-5"
+        className="max-w-xl space-y-4 rounded-lg border border-neutral-200 bg-white p-5 md:p-6"
       >
-        <h3 className="font-semibold">{duzenlenen ? "Adresi düzenle" : "Yeni adres ekle"}</h3>
+        <h3 className="text-sm font-bold uppercase tracking-wider">
+          {duzenlenen ? "Adresi düzenle" : "Yeni adres ekle"}
+        </h3>
         <input type="hidden" name="id" value={duzenlenen?.id ?? ""} />
 
         <div>
           <label className={etiket}>Adres başlığı *</label>
-          <input name="title" defaultValue={duzenlenen?.title} placeholder="Ev, İş..." required className={alan} />
+          <input name="title" defaultValue={duzenlenen?.title} placeholder="Ev, İş..." required className="input" />
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className={etiket}>Ad soyad *</label>
-            <input name="fullName" defaultValue={duzenlenen?.fullName ?? musteri.name ?? ""} required className={alan} />
+            <input name="fullName" defaultValue={duzenlenen?.fullName ?? musteri.name ?? ""} required className="input" />
           </div>
           <div>
             <label className={etiket}>Telefon *</label>
-            <input name="phone" type="tel" defaultValue={duzenlenen?.phone ?? musteri.phone ?? ""} required className={alan} />
+            <input name="phone" type="tel" defaultValue={duzenlenen?.phone ?? musteri.phone ?? ""} required className="input" />
           </div>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className={etiket}>İl *</label>
-            <input name="il" defaultValue={duzenlenen?.il} required className={alan} />
+            <input name="il" defaultValue={duzenlenen?.il} required className="input" />
           </div>
           <div>
             <label className={etiket}>İlçe *</label>
-            <input name="ilce" defaultValue={duzenlenen?.ilce} required className={alan} />
+            <input name="ilce" defaultValue={duzenlenen?.ilce} required className="input" />
           </div>
         </div>
         <div>
           <label className={etiket}>Açık adres *</label>
-          <textarea name="adres" rows={3} defaultValue={duzenlenen?.adres} required className={alan} />
+          <textarea name="adres" rows={3} defaultValue={duzenlenen?.adres} required className="input" />
         </div>
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" name="isDefault" defaultChecked={duzenlenen?.isDefault} />
+          <input type="checkbox" name="isDefault" defaultChecked={duzenlenen?.isDefault} className="accent-brand-700" />
           Varsayılan adresim olsun
         </label>
 
         <div className="flex items-center gap-4">
-          <button className="bg-teal-700 px-6 py-2 text-sm font-bold text-white hover:bg-teal-800">
-            KAYDET
-          </button>
+          <button className="btn btn-primary px-8">KAYDET</button>
           {duzenlenen && (
-            <Link href="/hesabim/adresler" className="text-sm text-neutral-600 hover:underline">
+            <Link href="/hesabim/adresler" className="text-sm font-semibold text-neutral-600 hover:underline">
               Vazgeç
             </Link>
           )}

@@ -1,6 +1,63 @@
 @import "tailwindcss";
 
-body {
-  background: #ffffff;
-  color: #2b2f33;
+@theme {
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+
+  /* Ana renk: sıcak kahve / ahşap */
+  --color-brand-50: #faf6f1;
+  --color-brand-100: #f1e8dc;
+  --color-brand-200: #e2cfb8;
+  --color-brand-300: #cfae8a;
+  --color-brand-400: #bb8d63;
+  --color-brand-500: #a8714a;
+  --color-brand-600: #8f5a39;
+  --color-brand-700: #75472c;
+  --color-brand-800: #5c3822;
+  --color-brand-900: #432919;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-white text-neutral-800 antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  button:not(:disabled),
+  [role="button"],
+  summary,
+  select {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-brand-600);
+    outline-offset: 2px;
+  }
+}
+
+/* Her yerde aynı görünen ortak parçalar */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-6 py-3 text-sm font-semibold tracking-wide transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply bg-brand-700 text-white shadow-sm hover:bg-brand-800 active:bg-brand-900;
+  }
+  .btn-outline {
+    @apply border border-neutral-300 bg-white text-neutral-800 hover:border-brand-700 hover:text-brand-700;
+  }
+  .btn-soft {
+    @apply bg-brand-50 text-brand-800 hover:bg-brand-100;
+  }
+  .input {
+    @apply w-full rounded-md border border-neutral-300 bg-white px-3.5 py-2.5 text-sm transition focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20;
+  }
+  .card {
+    @apply rounded-lg border border-neutral-200 bg-white;
+  }
 }
