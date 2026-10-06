@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { timingSafeEqual } from "crypto";
 import { createSession, isAdmin } from "@/lib/auth";
+import Uyari from "@/components/Uyari";
 
 function esit(a: string, b: string) {
   const x = Buffer.from(a);
@@ -29,32 +30,39 @@ export default async function LoginSayfasi({
   const { hata } = await searchParams;
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-neutral-100 px-4">
-      <form action={girisYap} className="w-full max-w-sm space-y-4 bg-white p-8 shadow">
-        <h1 className="text-center text-2xl font-light tracking-widest">YÖNETİM</h1>
+    <main className="flex min-h-screen items-center justify-center bg-brand-900 px-4">
+      <div className="w-full max-w-sm rounded-lg bg-white p-8 shadow-xl">
+        <div className="mb-6 text-center">
+          <div className="text-2xl font-light tracking-[0.25em] text-brand-900">RAFLIM</div>
+          <div className="mt-1 text-[11px] font-semibold uppercase tracking-widest text-neutral-500">
+            Yönetim paneli
+          </div>
+        </div>
+
         {hata && (
-          <p className="bg-red-50 p-2 text-center text-sm text-red-600">
+          <Uyari tip="hata" baslik="Giriş yapılamadı">
             E-posta veya şifre hatalı.
-          </p>
+          </Uyari>
         )}
-        <input
-          name="email"
-          type="email"
-          placeholder="E-posta"
-          required
-          className="w-full border border-neutral-300 px-3 py-2 text-sm"
-        />
-        <input
-          name="sifre"
-          type="password"
-          placeholder="Şifre"
-          required
-          className="w-full border border-neutral-300 px-3 py-2 text-sm"
-        />
-        <button className="w-full bg-brand-700 py-2 text-sm font-bold text-white hover:bg-brand-800">
-          GİRİŞ YAP
-        </button>
-      </form>
+
+        <form action={girisYap} className="space-y-4">
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-neutral-600">E-posta</label>
+            <input name="email" type="email" autoComplete="username" required className="input" />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-neutral-600">Şifre</label>
+            <input
+              name="sifre"
+              type="password"
+              autoComplete="current-password"
+              required
+              className="input"
+            />
+          </div>
+          <button className="btn btn-primary w-full py-3">GİRİŞ YAP</button>
+        </form>
+      </div>
     </main>
   );
 }

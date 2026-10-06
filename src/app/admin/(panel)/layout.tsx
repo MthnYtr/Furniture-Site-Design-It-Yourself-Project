@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { destroySession, isAdmin } from "@/lib/auth";
+import AdminMenu from "@/components/admin/AdminMenu";
 
 async function cikis() {
   "use server";
@@ -12,22 +13,28 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   if (!(await isAdmin())) redirect("/admin/login");
 
   return (
-    <div className="flex min-h-screen flex-col bg-neutral-50 md:flex-row">
-      <aside className="w-full shrink-0 bg-[#3b4149] p-5 text-sm text-white md:w-56">
-        <div className="mb-8 text-lg tracking-widest">YÖNETİM</div>
-        <nav className="flex flex-wrap gap-4 md:flex-col md:gap-3">
-          <Link href="/admin" className="hover:text-amber-300">Genel Bakış</Link>
-          <Link href="/admin/urunler" className="hover:text-amber-300">Ürünler</Link>
-          <Link href="/admin/kategoriler" className="hover:text-amber-300">Kategoriler</Link>
-          <Link href="/admin/ayarlar" className="hover:text-amber-300">Anasayfa Ayarları</Link>
-          <Link href="/admin/siparisler" className="hover:text-amber-300">Siparişler</Link>
-          <Link href="/" className="mt-6 text-neutral-300 hover:text-white">← Siteyi gör</Link>
-        </nav>
-        <form action={cikis} className="mt-8">
-          <button className="text-neutral-300 hover:text-white">Çıkış yap</button>
-        </form>
+    <div className="min-h-screen bg-neutral-100 md:flex">
+      <aside className="flex flex-col bg-brand-900 text-white md:sticky md:top-0 md:h-screen md:w-60 md:shrink-0 md:overflow-y-auto">
+        <div className="px-5 py-4 md:py-6">
+          <div className="text-xl font-light tracking-[0.25em]">RAFLIM</div>
+          <div className="mt-0.5 text-[11px] font-semibold uppercase tracking-widest text-brand-300">
+            Yönetim paneli
+          </div>
+        </div>
+
+        <AdminMenu />
+
+        <div className="flex items-center gap-4 border-t border-white/10 px-5 py-4 text-sm md:mt-auto md:flex-col md:items-start md:gap-3">
+          <Link href="/" className="text-brand-200 transition-colors hover:text-white">
+            &larr; Siteyi gör
+          </Link>
+          <form action={cikis}>
+            <button className="text-brand-200 transition-colors hover:text-white">Çıkış yap</button>
+          </form>
+        </div>
       </aside>
-      <div className="flex-1 overflow-x-auto p-4 md:p-8">{children}</div>
+
+      <main className="min-w-0 flex-1 p-4 md:p-8">{children}</main>
     </div>
   );
 }
