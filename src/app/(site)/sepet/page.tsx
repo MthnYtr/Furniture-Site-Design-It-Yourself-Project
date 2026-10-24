@@ -3,7 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { getCart } from "@/lib/cart";
 import { birimFiyat } from "@/lib/fiyat";
 import Uyari from "@/components/Uyari";
-import { adetDegistir, urunCikar } from "./actions";
+import { tasarimSatirlari } from "@/lib/tasarimSepet";
+import { tasarimAdresi } from "@/lib/tasarim/kayit";
+import { adetDegistir, tasarimAdetDegistir, tasarimCikar, urunCikar } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -40,11 +42,15 @@ export default async function SepetSayfasi({
     return [{ u, varyant, q: s.q, fiyat, toplam: fiyat * s.q, stok, sorun: stok < s.q }];
   });
 
-  const genelToplam = satirlar.reduce((t, s) => t + s.toplam, 0);
-  const toplamAdet = satirlar.reduce((t, s) => t + s.q, 0);
+  // Kendin Tasarla ürünleri (fiyat sunucuda tasarımdan yeniden hesaplanır)
+  const tasarimlar = await tasarimSatirlari();
+
+  const genelToplam =
+    satirlar.reduce((t, s) => t + s.toplam, 0) + tasarimlar.reduce((t, s) => t + s.toplam, 0);
+  const toplamAdet = satirlar.reduce((t, s) => t + s.q, 0) + tasarimlar.reduce((t, s) => t + s.q, 0);
   const sorunVar = satirlar.some((s) => s.sorun);
 
-  if (satirlar.length === 0) {
+  if (satirlar.length === 0 && tasarimlar.length === 0) {
     return (
       <main className="mx-auto max-w-330 px-4 py-16 md:py-24">
         <div className="mx-auto max-w-md rounded-lg border border-neutral-200 bg-white px-6 py-12 text-center">
@@ -81,6 +87,11 @@ export default async function SepetSayfasi({
       {hata === "sinir" && (
         <Uyari tip="uyari" baslik="Daha fazla eklenemiyor">
           Bu üründen eklenebilecek en fazla adede ulaştın.
+        </Uyari>
+      )}
+      {hata === "tasarimSiniri" && (
+        <Uyari tip="uyari" baslik="Sepette en fazla 6 farklı tasarım olabilir">
+          Yeni bir tasarım eklemek için sepetteki tasarımlardan birini kaldır.
         </Uyari>
       )}
       {hata === "stok" && (
@@ -181,6 +192,87 @@ export default async function SepetSayfasi({
               </div>
             </div>
           ))}
+
+          {tasarimlar.map((t) => (
+            <div key={t.id} className="flex gap-4 rounded-lg border border-brand-200 bg-white p-4">
+              <Link
+                href={tasarimAdresi(t.tur, t.sorgu)}
+                className="flex h-24 w-28 shrink-0 flex-col items-center justify-center gap-1 rounded-md bg-brand-50 text-brand-700 md:h-28 md:w-36"
+              >
+                <svg viewBox="0 0 24 24" className="h-9 w-9" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round">
+                  <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" />
+                  <path d="M12 12l8-4.5M12 12v9M12 12L4 7.5" />
+                </svg>
+                <span className="text-[11px] font-bold">3D tasarım</span>
+              </Link>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-semibold">Kendin Tasarla: {t.ad}</span>
+                  <span className="rounded bg-brand-100 px-2 py-0.5 text-[11px] font-bold text-brand-800">Özel üretim</span>
+                </div>
+                <p className="mt-1 text-xs text-neutral-600">{t.ozet[0]}</p>
+                {t.ozet.length > 1 && (
+                  <details className="mt-1 text-xs text-neutral-500">
+                    <summary className="cursor-pointer font-semibold text-brand-700">Modül detayları ({t.ozet.length - 1})</summary>
+                    <ul className="mt-1 space-y-0.5 pl-1">
+                      {t.ozet.slice(1).map((x) => (
+                        <li key={x}>{x}</li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+                <div className="mt-1 text-sm text-neutral-600">{tl(t.fiyat)}</div>
+
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                  <div className="inline-flex items-center overflow-hidden rounded-md border border-neutral-300">
+                    <form action={tasarimAdetDegistir}>
+                      <input type="hidden" name="id" value={t.id} />
+                      <input type="hidden" name="fark" value="-1" />
+                      <button aria-label="Azalt" className={adetDugme}>
+                        −
+                      </button>
+                    </form>
+                    <span className="w-10 text-center text-sm font-semibold">{t.q}</span>
+                    <form action={tasarimAdetDegistir}>
+                      <input type="hidden" name="id" value={t.id} />
+                      <input type="hidden" name="fark" value="1" />
+                      <button aria-label="Artır" className={adetDugme}>
+                        +
+                      </button>
+                    </form>
+                  </div>
+
+                  <div className="text-lg font-bold">{tl(t.toplam)}</div>
+
+                  <div className="flex items-center gap-1">
+                    <Link
+                      href={tasarimAdresi(t.tur, t.sorgu)}
+                      className="rounded-md px-2 py-1.5 text-xs font-semibold text-brand-700 transition-colors hover:bg-brand-50"
+                    >
+                      Düzenle
+                    </Link>
+                    <form action={tasarimCikar}>
+                      <input type="hidden" name="id" value={t.id} />
+                      <button
+                        aria-label="Sepetten kaldır"
+                        className="rounded-md px-2 py-1.5 text-xs font-semibold text-neutral-500 transition-colors hover:bg-red-50 hover:text-red-600"
+                      >
+                        Kaldır
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {tasarimlar.length > 0 && (
+            <p className="text-xs text-neutral-500">
+              Düzenle&apos;ye basınca tasarım açılır. Değişiklikten sonra tekrar sepete eklersen yeni satır olarak gelir, eskisini
+              kaldırmayı unutma.
+            </p>
+          )}
 
           <Link
             href="/"

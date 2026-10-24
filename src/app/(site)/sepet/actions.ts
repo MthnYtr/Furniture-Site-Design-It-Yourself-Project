@@ -3,6 +3,14 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { ayniMi, getCart, saveCart } from "@/lib/cart";
+import { tasarimCoz } from "@/lib/tasarim/kayit";
+import {
+  MAX_TASARIM,
+  MAX_TASARIM_ADET,
+  getTasarimSepet,
+  saveTasarimSepet,
+  yeniTasarimId,
+} from "@/lib/tasarimSepet";
 
 export async function sepeteEkle(formData: FormData) {
   const id = Number(formData.get("productId"));
@@ -76,5 +84,41 @@ export async function urunCikar(formData: FormData) {
   const v = Number(formData.get("v")) || undefined;
   const sepet = await getCart();
   await saveCart(sepet.filter((x) => !ayniMi(x, id, v)));
+  redirect("/sepet");
+}
+// Kendin Tasarla: tasarımı sepete ekler. Fiyat tarayıcıdan alınmaz, sunucuda hesaplanır.
+export async function tasarimSepeteEkle(formData: FormData) {
+  const tur = String(formData.get("tur") ?? "");
+  const sorgu = String(formData.get("sorgu") ?? "");
+  const t = tasarimCoz(tur, sorgu);
+  if (!t) redirect("/kendin-tasarla");
+
+  const sepet = await getTasarimSepet();
+  const ayni = sepet.find((x) => x.t === t.tur && x.c === t.sorgu);
+  if (ayni) {
+    ayni.q = Math.min(MAX_TASARIM_ADET, ayni.q + 1);
+  } else {
+    if (sepet.length >= MAX_TASARIM) redirect("/sepet?hata=tasarimSiniri");
+    sepet.push({ id: yeniTasarimId(), t: t.tur, c: t.sorgu, q: 1 });
+  }
+  await saveTasarimSepet(sepet);
+  redirect("/sepet");
+}
+
+export async function tasarimAdetDegistir(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  const fark = Number(formData.get("fark")) === -1 ? -1 : 1;
+  const sepet = await getTasarimSepet();
+  const yeni = sepet
+    .map((x) => (x.id === id ? { ...x, q: Math.min(MAX_TASARIM_ADET, x.q + fark) } : x))
+    .filter((x) => x.q > 0);
+  await saveTasarimSepet(yeni);
+  redirect("/sepet");
+}
+
+export async function tasarimCikar(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  const sepet = await getTasarimSepet();
+  await saveTasarimSepet(sepet.filter((x) => x.id !== id));
   redirect("/sepet");
 }

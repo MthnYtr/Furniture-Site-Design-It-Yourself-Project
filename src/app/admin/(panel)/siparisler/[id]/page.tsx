@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { DURUMLAR, DURUM_ADI, tl, type Durum } from "@/lib/siparis";
 import { KARGO_FIRMALARI, takipAdresi } from "@/lib/kargo";
 import { durumGuncelle, kargoKaydet } from "../actions";
+import { tasarimBilgisi } from "@/lib/tasarim/kayit";
+import { kesimListesi } from "@/lib/tasarim/kesim";
 
 export const dynamic = "force-dynamic";
 
@@ -86,9 +88,11 @@ export default async function SiparisDetay({
         {s.items.map((it) => {
           const cfg = it.config as { variantName?: string; sku?: string } | null;
           const kod = cfg?.sku ?? urunKodlari.get(it.productId) ?? null;
+          const tsr = tasarimBilgisi(it.config);
+          const kesim = tsr ? kesimListesi(tsr.tur, tsr.sorgu) : null;
           return (
             <div key={it.id} className="flex items-start justify-between gap-4 border-b border-neutral-100 py-3 last:border-0">
-              <div>
+              <div className="min-w-0 flex-1">
                 <div className="font-medium">
                   {it.productName}
                   {cfg?.variantName ? ` (${cfg.variantName})` : ""}
@@ -98,6 +102,65 @@ export default async function SiparisDetay({
                   {kod && " · "}
                   {it.quantity} adet × {tl(Number(it.unitPrice))}
                 </div>
+                {tsr && (
+                  <div className="mt-2 rounded-lg border border-brand-200 bg-brand-50/50 p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="rounded bg-brand-700 px-2 py-0.5 text-[11px] font-bold text-white">Özel üretim</span>
+                      <a
+                        href={tsr.adres}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-semibold text-brand-700 hover:underline"
+                      >
+                        Tasarımı 3D aç →
+                      </a>
+                    </div>
+                    <ul className="mt-2 space-y-0.5 text-xs text-neutral-700">
+                      {tsr.ozet.map((x) => (
+                        <li key={x}>{x}</li>
+                      ))}
+                    </ul>
+                    {kesim && (
+                      <details className="mt-3">
+                        <summary className="cursor-pointer text-xs font-bold text-brand-800">
+                          Kesim listesi ({kesim.satirlar.reduce((t, r) => t + r.adet, 0)} parça)
+                        </summary>
+                        <div className="mt-2 overflow-x-auto">
+                          <table className="w-full min-w-[520px] text-left text-xs">
+                            <thead className="text-neutral-500">
+                              <tr className="border-b border-neutral-200">
+                                <th className="py-1.5 pr-3 font-semibold">Malzeme</th>
+                                <th className="py-1.5 pr-3 font-semibold">Parça</th>
+                                <th className="py-1.5 pr-3 font-semibold">Ölçü</th>
+                                <th className="py-1.5 pr-3 text-right font-semibold">Adet</th>
+                                <th className="py-1.5 text-right font-semibold">Bant (m)</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {kesim.satirlar.map((r) => (
+                                <tr key={`${r.malzeme}-${r.ad}-${r.olcu}`} className="border-b border-neutral-100">
+                                  <td className="py-1.5 pr-3 text-neutral-600">{r.malzeme}</td>
+                                  <td className="py-1.5 pr-3">{r.ad}</td>
+                                  <td className="py-1.5 pr-3 font-mono">{r.olcu}</td>
+                                  <td className="py-1.5 pr-3 text-right font-semibold">{r.adet * it.quantity}</td>
+                                  <td className="py-1.5 text-right">{r.bantM ? (r.bantM * it.quantity).toFixed(2) : "-"}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                          {kesim.donanim.length > 0 && (
+                            <p className="mt-2 text-xs text-neutral-600">
+                              Donanım: {kesim.donanim.map((d) => `${d.ad} × ${d.adet * it.quantity}`).join(", ")}
+                            </p>
+                          )}
+                          <p className="mt-1 text-[11px] text-neutral-500">
+                            Adetler sipariş adedi ({it.quantity}) ile çarpılmıştır. Ölçüler mm, kalınlık malzeme sütununda.
+                          </p>
+                        </div>
+                      </details>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="shrink-0 font-semibold">{tl(Number(it.unitPrice) * it.quantity)}</div>
             </div>

@@ -7,6 +7,7 @@ import { tl } from "@/lib/siparis";
 import { birimFiyat } from "@/lib/fiyat";
 import AdresSecici from "@/components/AdresSecici";
 import Uyari from "@/components/Uyari";
+import { tasarimSatirlari } from "@/lib/tasarimSepet";
 import { siparisVer } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -51,7 +52,8 @@ export default async function OdemeSayfasi({
 }) {
   const { hata, urun } = await searchParams;
   const sepet = await getCart();
-  if (sepet.length === 0) redirect("/sepet");
+  const tasarimlar = await tasarimSatirlari();
+  if (sepet.length === 0 && tasarimlar.length === 0) redirect("/sepet");
 
   const musteri = await mevcutMusteri();
   const sonSiparis = musteri
@@ -95,10 +97,11 @@ export default async function OdemeSayfasi({
     return [{ u, varyant, q: s.q, toplam: fiyat * s.q, yetersiz: stok < s.q }];
   });
 
-  if (satirlar.length === 0) redirect("/sepet");
+  if (satirlar.length === 0 && tasarimlar.length === 0) redirect("/sepet");
   if (satirlar.some((s) => s.yetersiz)) redirect("/sepet?hata=stok");
 
-  const genelToplam = satirlar.reduce((t, s) => t + s.toplam, 0);
+  const genelToplam =
+    satirlar.reduce((t, s) => t + s.toplam, 0) + tasarimlar.reduce((t, s) => t + s.toplam, 0);
 
   return (
     <main className="mx-auto max-w-330 px-4 py-6 md:py-10">
@@ -238,6 +241,16 @@ export default async function OdemeSayfasi({
                   </div>
                 </div>
                 <span className="shrink-0 font-semibold">{tl(toplam)}</span>
+              </li>
+            ))}
+            {tasarimlar.map((t) => (
+              <li key={t.id} className="flex justify-between gap-3 py-3 first:pt-0">
+                <div className="min-w-0">
+                  <div className="font-medium">Kendin Tasarla: {t.ad}</div>
+                  <div className="mt-0.5 text-xs text-neutral-500">{t.ozet[0]}</div>
+                  <div className="mt-0.5 text-xs text-neutral-500">Özel üretim · {t.q} adet</div>
+                </div>
+                <span className="shrink-0 font-semibold">{tl(t.toplam)}</span>
               </li>
             ))}
           </ul>

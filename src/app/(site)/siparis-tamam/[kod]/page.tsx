@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { mevcutMusteri } from "@/lib/musteri";
 import { tl } from "@/lib/siparis";
 import { siparisUrunBilgisi } from "@/lib/siparisUrunleri";
+import { tasarimBilgisi } from "@/lib/tasarim/kayit";
 
 export const dynamic = "force-dynamic";
 
@@ -42,17 +43,23 @@ export default async function SiparisTamam({
           {siparis.items.map((it) => {
             const b = bilgi.get(it.productId);
             const cfg = it.config as { sku?: string } | null;
-            const urunKodu = cfg?.sku ?? b?.sku ?? "";
+            const tsr = tasarimBilgisi(it.config);
+            const urunKodu = tsr ? "" : (cfg?.sku ?? b?.sku ?? "");
             return (
               <li key={it.id} className="flex items-center gap-4 p-4">
                 <div className="h-16 w-20 shrink-0 overflow-hidden rounded-md bg-neutral-100">
-                  {b?.resim && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={b.resim} alt={it.productName} className="h-full w-full object-cover" />
+                  {tsr ? (
+                    <div className="flex h-full w-full items-center justify-center bg-brand-50 text-[10px] font-bold text-brand-700">3D tasarım</div>
+                  ) : (
+                    b?.resim && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={b.resim} alt={it.productName} className="h-full w-full object-cover" />
+                    )
                   )}
                 </div>
                 <div className="min-w-0 flex-1 text-sm">
                   <div className="font-semibold">{it.productName}</div>
+                  {tsr && <div className="mt-0.5 text-xs text-neutral-600">{tsr.ozet[0]}</div>}
                   <div className="mt-0.5 text-xs text-neutral-500">
                     {urunKodu && <span className="mr-2 font-mono">{urunKodu}</span>}
                     {it.quantity} adet

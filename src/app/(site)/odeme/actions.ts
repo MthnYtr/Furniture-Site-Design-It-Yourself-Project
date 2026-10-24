@@ -5,6 +5,35 @@ import { prisma } from "@/lib/prisma";
 import { getCart, saveCart } from "@/lib/cart";
 import { mevcutMusteri } from "@/lib/musteri";
 import { birimFiyat } from "@/lib/fiyat";
+import { saveTasarimSepet, tasarimSatirlari } from "@/lib/tasarimSepet";
+import { TASARIMLAR, tasarimSku, type TasarimTuru } from "@/lib/tasarim/kayit";
+import type { Prisma } from "@/generated/prisma/client";
+
+// Kendin Tasarla siparişleri için gizli (satışta görünmeyen) bir ürün kaydı.
+// Sipariş kalemleri bir ürüne bağlı olmak zorunda; tasarım ayrıntısı kalemin config alanında saklanır.
+async function tasarimUrunu(tx: Prisma.TransactionClient, tur: TasarimTuru) {
+  const sku = tasarimSku(tur);
+  const var_ = await tx.product.findUnique({ where: { sku } });
+  if (var_) return var_.id;
+  let kategori = await tx.category.findFirst({ orderBy: { sortOrder: "asc" } });
+  if (!kategori) {
+    kategori = await tx.category.create({ data: { name: "Kendin Tasarla", slug: "kendin-tasarla" } });
+  }
+  const yeni = await tx.product.create({
+    data: {
+      name: `Kendin Tasarla: ${TASARIMLAR[tur].ad}`,
+      slug: `kendin-tasarla-${tur}`,
+      sku,
+      type: "CONFIGURABLE",
+      basePrice: 0,
+      stock: 0,
+      isActive: false,
+      categoryId: kategori.id,
+      description: "Kendin Tasarla siparişleri için otomatik oluşturuldu. Satışta görünmez, silmeyin.",
+    },
+  });
+  return yeni.id;
+}
 
 export async function siparisVer(formData: FormData) {
   const s = (k: string) => String(formData.get(k) ?? "").trim();
@@ -29,7 +58,8 @@ export async function siparisVer(formData: FormData) {
   }
 
   const sepet = await getCart();
-  if (sepet.length === 0) redirect("/sepet");
+  const tasarimlar = await tasarimSatirlari();
+  if (sepet.length === 0 && tasarimlar.length === 0) redirect("/sepet");
 
   const musteri = await mevcutMusteri();
 
@@ -48,10 +78,10 @@ export async function siparisVer(formData: FormData) {
         if (u.variants.length > 0 && !varyant) return [];
         return [{ u, varyant, q: x.q }];
       });
-      if (satirlar.length === 0) throw new Error("BOS");
+      if (satirlar.length === 0 && tasarimlar.length === 0) throw new Error("BOS");
 
       let toplam = 0;
-      const items = satirlar.map(({ u, varyant, q }) => {
+      const items: Prisma.OrderItemUncheckedCreateWithoutOrderInput[] = satirlar.map(({ u, varyant, q }) => {
         const fiyat = birimFiyat(u, varyant);
         toplam += fiyat * q;
         return {
@@ -64,6 +94,18 @@ export async function siparisVer(formData: FormData) {
             : undefined,
         };
       });
+
+      // Kendin Tasarla kalemleri: fiyat tasarımdan sunucuda hesaplandı, stok düşülmez (özel üretim)
+      for (const t of tasarimlar) {
+        toplam += t.fiyat * t.q;
+        items.push({
+          productId: await tasarimUrunu(tx, t.tur),
+          productName: `Kendin Tasarla: ${t.ad}`,
+          quantity: t.q,
+          unitPrice: t.fiyat,
+          config: { tasarim: t.tur, sorgu: t.sorgu, ozet: t.ozet },
+        });
+      }
 
       const siparis = await tx.order.create({
         data: {
@@ -129,5 +171,6 @@ export async function siparisVer(formData: FormData) {
   }
 
   await saveCart([]);
+  await saveTasarimSepet([]);
   redirect(`/siparis-tamam/${kod}`);
 }

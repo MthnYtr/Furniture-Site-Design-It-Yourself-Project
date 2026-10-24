@@ -80,6 +80,9 @@ export default function MobilMenu({ kategoriler, girisli }: Props) {
               <Link href="/kampanyalar" onClick={kapat} className={satir}>
                 Kampanyalar
               </Link>
+              <Link href="/kendin-tasarla" onClick={kapat} className={satir}>
+                Kendin Tasarla
+              </Link>
               <Link href="/sayfa/teslimat-ve-iade" onClick={kapat} className={satir}>
                 Destek Merkezi
               </Link>

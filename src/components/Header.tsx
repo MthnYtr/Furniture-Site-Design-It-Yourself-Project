@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCart } from "@/lib/cart";
+import { getTasarimSepet } from "@/lib/tasarimSepet";
 import { mevcutMusteri } from "@/lib/musteri";
 import MobilMenu from "@/components/MobilMenu";
 
@@ -71,7 +72,8 @@ export default async function Header() {
     orderBy: { sortOrder: "asc" },
   });
 
-  const adet = (await getCart()).reduce((t, x) => t + x.q, 0);
+  const adet =
+    (await getCart()).reduce((t, x) => t + x.q, 0) + (await getTasarimSepet()).reduce((t, x) => t + x.q, 0);
   const musteri = await mevcutMusteri();
 
   return (
@@ -90,7 +92,7 @@ export default async function Header() {
             <Link href="/kampanyalar" className="transition-colors hover:text-amber-300">
               Kampanyalar
             </Link>
-            <Link href="#" className="transition-colors hover:text-amber-300">
+            <Link href="/kendin-tasarla" className="transition-colors hover:text-amber-300">
               Kendin Tasarla
             </Link>
             <Link href="/sayfa/teslimat-ve-iade" className="text-amber-400 transition-colors hover:text-amber-300">

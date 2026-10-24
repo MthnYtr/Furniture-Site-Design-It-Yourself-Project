@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { mevcutMusteri } from "@/lib/musteri";
 import { tl } from "@/lib/siparis";
 import { siparisUrunBilgisi } from "@/lib/siparisUrunleri";
+import { tasarimBilgisi } from "@/lib/tasarim/kayit";
 import SiparisRozet from "@/components/SiparisRozet";
 
 export const dynamic = "force-dynamic";
@@ -52,14 +53,19 @@ export default async function Siparislerim() {
                 {s.items.map((it) => {
                   const b = bilgi.get(it.productId);
                   const cfg = it.config as { sku?: string } | null;
-                  const kod = cfg?.sku ?? b?.sku ?? "";
-                  const link = b?.aktif ? `/urun/${b.slug}` : null;
+                  const tsr = tasarimBilgisi(it.config);
+                  const kod = tsr ? "" : (cfg?.sku ?? b?.sku ?? "");
+                  const link = tsr ? tsr.adres : b?.aktif ? `/urun/${b.slug}` : null;
 
                   const resim = (
                     <div className="h-16 w-20 shrink-0 overflow-hidden rounded-md bg-neutral-100">
-                      {b?.resim && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={b.resim} alt={it.productName} className="h-full w-full object-cover" />
+                      {tsr ? (
+                        <div className="flex h-full w-full items-center justify-center bg-brand-50 text-[10px] font-bold text-brand-700">3D tasarım</div>
+                      ) : (
+                        b?.resim && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={b.resim} alt={it.productName} className="h-full w-full object-cover" />
+                        )
                       )}
                     </div>
                   );
@@ -75,6 +81,7 @@ export default async function Siparislerim() {
                         ) : (
                           <span className="font-semibold">{it.productName}</span>
                         )}
+                        {tsr && <div className="mt-0.5 text-xs text-neutral-600">{tsr.ozet[0]}</div>}
                         <div className="mt-0.5 text-xs text-neutral-500">
                           {kod && <span className="mr-2 font-mono">{kod}</span>}
                           {it.quantity} adet
